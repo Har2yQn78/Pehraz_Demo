@@ -64,10 +64,10 @@ class PlantNetService:
         # Prepare the API request
         url = f"{self.DISEASE_URL}/identify"
         params = {
-            'api-key': self.disease_api_key,
-            'organ': organ
+            'api-key': self.disease_api_key
         }
 
+        # Disease API doesn't use organ parameter, just send the image
         files = {
             'images': (filename, image_data, 'image/jpeg')
         }
@@ -126,10 +126,14 @@ class PlantNetService:
 
         if 'results' in api_response:
             for result in api_response['results']:
+                # Disease API returns 'name' with EPPO code and 'score' directly
+                disease_name = result.get('name', 'Unknown')
+                score = result.get('score', 0)
+
                 results.append({
-                    'disease_name': result.get('disease', {}).get('name', 'Unknown'),
-                    'score': round(result.get('score', 0) * 100, 2),
-                    'description': result.get('disease', {}).get('description'),
+                    'disease_name': disease_name,
+                    'score': round(score * 100, 2),  # Convert to percentage
+                    'description': None,  # Description not in basic response
                 })
 
         # Sort by score
