@@ -17,7 +17,7 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 from ninja import NinjaAPI
-from api.endpoints import router as api_router
+from api.api import router as api_router
 
 api = NinjaAPI(title="PlantNet API", version="1.0.0")
 api.add_router("/", api_router)
