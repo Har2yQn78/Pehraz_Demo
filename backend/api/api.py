@@ -30,20 +30,23 @@ def identify_plant(
     organs: str = "leaf"
 ):
     try:
-        # Read image data
+        # Read image data ONCE
         image_data = image.read()
 
-        # Validate image
+        # Store filename before any processing
+        filename = image.name
+
+        # Validate image (now safely without corrupting data)
         plantnet_service.validate_image(image_data)
 
         # Parse organs parameter
         organs_list = [organ.strip() for organ in organs.split(',')]
 
-        # Call PlantNet API
+        # Call PlantNet API with the original image_data
         raw_result = plantnet_service.identify_plant(
             image_data=image_data,
             organs=organs_list,
-            filename=image.name
+            filename=filename
         )
 
         # Parse and return result
@@ -63,8 +66,11 @@ def detect_disease(
     organ: str = "leaf"
 ):
     try:
-        # Read image data
+        # Read image data ONCE
         image_data = image.read()
+
+        # Store filename before any processing
+        filename = image.name
 
         # Validate image
         plantnet_service.validate_image(image_data)
@@ -73,7 +79,7 @@ def detect_disease(
         raw_result = plantnet_service.detect_disease(
             image_data=image_data,
             organ=organ,
-            filename=image.name
+            filename=filename
         )
 
         # Parse and return result

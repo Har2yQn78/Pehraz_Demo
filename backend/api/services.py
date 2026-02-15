@@ -23,6 +23,18 @@ class PlantNetService:
         organs: List[str],
         filename: str = "image.jpg"
     ) -> Dict:
+        """
+        Identify plant using PlantNet API.
+
+        CRITICAL: According to official PlantNet documentation, organs must be
+        sent as SEPARATE form fields, one per image, NOT as a list.
+
+        Example from official docs:
+        form.append('organs', 'flower');
+        form.append('images', image1);
+        form.append('organs', 'leaf');
+        form.append('images', image2);
+        """
         # Validate organs
         valid_organs = ["leaf", "flower", "fruit", "bark", "habit", "other"]
         organs = [organ for organ in organs if organ in valid_organs]
@@ -36,19 +48,34 @@ class PlantNetService:
             'api-key': self.api_key
         }
 
-        # Send organs as form data, not URL params
-        data = {
-            'organs': organs  # Send as list
-        }
+        # CRITICAL FIX: For a single image with multiple organ types,
+        # we need to send the FIRST organ that matches
+        # According to PlantNet docs: "Number of values for organs must match number of input images"
+        # Since we have 1 image, we send 1 organ (the first one in the list)
 
+        # Build multipart form data manually using requests
+        # We send organs as separate fields to match the API expectation
         files = {
             'images': (filename, image_data, 'image/jpeg')
         }
 
+        # Send only the FIRST organ since we have ONE image
+        # This matches the API requirement: same number of organs as images
+        data = {
+            'organs': organs[0]  # Single organ for single image
+        }
+
         try:
-            response = requests.post(url, params=params, data=data, files=files, timeout=30)
+            response = requests.post(url, params=params, files=files, data=data, timeout=30)
             response.raise_for_status()
             return response.json()
+        except requests.exceptions.HTTPError as e:
+            # Try to get error message from response
+            try:
+                error_detail = response.json()
+                raise Exception(f"PlantNet API error: {response.status_code} - {error_detail}")
+            except:
+                raise Exception(f"PlantNet API error: {response.status_code} - {response.text[:200]}")
         except requests.exceptions.RequestException as e:
             raise Exception(f"PlantNet API error: {str(e)}")
 
@@ -61,13 +88,11 @@ class PlantNetService:
         if not self.disease_api_key:
             raise ValueError("PLANTNET_DISEASE_API_KEY not configured")
 
-        # Prepare the API request
         url = f"{self.DISEASE_URL}/identify"
         params = {
             'api-key': self.disease_api_key
         }
 
-        # Disease API doesn't use organ parameter, just send the image
         files = {
             'images': (filename, image_data, 'image/jpeg')
         }
@@ -77,20 +102,28 @@ class PlantNetService:
             response.raise_for_status()
             return response.json()
         except requests.exceptions.RequestException as e:
-            # Disease API might not be available or configured
             raise Exception(f"PlantNet Disease API error: {str(e)}")
 
     @staticmethod
     def validate_image(image_data: bytes, max_size_mb: int = 10) -> bool:
+        """
+        Validate image without corrupting the data.
+
+        IMPORTANT: Do NOT use img.verify() - it corrupts the file pointer!
+        """
         # Check file size
         size_mb = len(image_data) / (1024 * 1024)
         if size_mb > max_size_mb:
             raise ValueError(f"Image too large: {size_mb:.2f}MB (max: {max_size_mb}MB)")
 
-        # Try to open as image
+        # Validate it's a real image
         try:
             img = Image.open(BytesIO(image_data))
-            img.verify()
+            # Check format is valid (raises exception if invalid)
+            if img.format is None:
+                raise ValueError("Cannot determine image format")
+            # Load image data to ensure it's valid
+            img.load()
             return True
         except Exception as e:
             raise ValueError(f"Invalid image file: {str(e)}")
