@@ -19,10 +19,11 @@ from django.contrib import admin
 from django.urls import path
 from django.shortcuts import redirect
 from ninja import NinjaAPI
-from api.api import router as api_router
+from api import api as api_module
 
 api = NinjaAPI(title="PlantNet API", version="1.0.0")
-api.add_router("", api_router)
+
+api.add_router("", api_module.router)
 
 urlpatterns = [
     path("admin/", admin.site.urls),

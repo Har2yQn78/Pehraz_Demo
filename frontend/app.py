@@ -14,13 +14,13 @@ API_BASE = f"{BACKEND_URL}/api"
 
 # Page config
 st.set_page_config(
-    page_title="PlantNet Identifier",
+    page_title="Pehraz Identifier",
     page_icon="🌿",
     layout="wide"
 )
 
 # Title
-st.title("🌿 PlantNet Plant Identifier")
+st.title("🌿 Pehraz Demo test for detection")
 st.markdown("Upload a plant image to identify the species and detect potential diseases")
 
 # Sidebar
@@ -61,7 +61,7 @@ with col1:
                 has_bark = st.checkbox("Bark")
             with col_c:
                 has_habit = st.checkbox("Habit/Overall")
-                has_other = st.checkbox("Other")
+                has_other = st.checkbox("auto")
 
             # Collect selected organs
             organs = []
@@ -70,7 +70,7 @@ with col1:
             if has_fruit: organs.append("fruit")
             if has_bark: organs.append("bark")
             if has_habit: organs.append("habit")
-            if has_other: organs.append("other")
+            if has_other: organs.append("auto")
 
             if not organs:
                 organs = ["leaf"]  # Default
@@ -228,8 +228,5 @@ with col1:
 # Footer
 st.sidebar.markdown("---")
 st.sidebar.markdown("""
-**Powered by:**
-- Blue Print Studio
-- Django + Django Ninja
-- Streamlit
+**Blue Print Studio**
 """)

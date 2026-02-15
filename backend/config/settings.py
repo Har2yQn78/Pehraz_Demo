@@ -143,3 +143,14 @@ CORS_ALLOW_HEADERS = [
     "x-csrftoken",
     "x-requested-with",
 ]
+
+# CSRF Configuration for Django Ninja
+CSRF_TRUSTED_ORIGINS = [
+    "http://localhost:8501",
+    "http://127.0.0.1:8501",
+    "http://localhost:8000",
+    "http://127.0.0.1:8000",
+]
+
+# Disable CSRF for API endpoints (Django Ninja handles this differently)
+CSRF_COOKIE_HTTPONLY = False
