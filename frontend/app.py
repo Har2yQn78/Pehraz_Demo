@@ -229,7 +229,7 @@ with col1:
 st.sidebar.markdown("---")
 st.sidebar.markdown("""
 **Powered by:**
-- [PlantNet API](https://my.plantnet.org/)
+- Blue Print Studio
 - Django + Django Ninja
 - Streamlit
 """)
