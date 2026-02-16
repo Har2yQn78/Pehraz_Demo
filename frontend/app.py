@@ -139,7 +139,7 @@ with col1:
 
                                 # Show remaining requests if available
                                 if data.get('remaining_identification_requests') is not None:
-                                    st.info(f"ℹ️ Remaining API requests: {data['remaining_identification_requests']}")
+                                    st.info(f"ℹ️: {data['remaining_identification_requests']}")
 
                             else:
                                 error_data = response.json()
