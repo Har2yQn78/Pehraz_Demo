@@ -75,13 +75,20 @@ with col1:
             if not organs:
                 organs = ["leaf"]  # Default
 
-        # Organ selection for disease detection
+        # Organ and model selection for disease detection
         if identification_mode in ["Disease Detection", "Both"]:
             st.subheader("Disease Detection Settings")
             disease_organ = st.selectbox(
                 "Primary organ for disease detection",
                 ["leaf", "flower", "fruit", "bark"],
                 index=0
+            )
+            disease_model = st.selectbox(
+                "Disease detection model",
+                options=["plantid", "plantnet"],
+                format_func=lambda x: "Model 1" if x == "plantid" else "Model 2",
+                index=0,
+                help="Model 1: Plant.id (Kindwise). Model 2: PlantNet."
             )
 
         # Analyze button
@@ -162,14 +169,14 @@ with col1:
                             # Prepare request
                             uploaded_file.seek(0)
                             files = {'image': uploaded_file}
-                            params = {'organ': disease_organ}
+                            params = {'organ': disease_organ, 'model': disease_model}
 
-                            # Make API request
+                            # Make API request (plant.id can take longer)
                             response = requests.post(
                                 f"{API_BASE}/detect-disease",
                                 files=files,
                                 params=params,
-                                timeout=30
+                                timeout=60
                             )
 
                             if response.status_code == 200:

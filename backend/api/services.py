@@ -1,8 +1,98 @@
+import base64
 import os
 import requests
 from typing import List, Dict, Optional
 from PIL import Image
 from io import BytesIO
+
+
+class PlantIdDiseaseService:
+    """
+    Disease detection using plant.id API v3 Health Assessment.
+    Docs: https://documenter.getpostman.com/view/24599534/2s93z5A4v2
+    See also: https://github.com/flowerchecker/plant-id-examples (Health Assessment)
+    """
+    BASE_URL = "https://api.plant.id/v3/identification"
+
+    def __init__(self):
+        # Get API key from env (plant.id / Kindwise). Get a key at https://admin.kindwise.com
+        self.api_key = os.getenv('PLANT_ID_API_KEY') or os.getenv('PLANTID_API_KEY')
+        if not self.api_key:
+            raise ValueError(
+                "PLANT_ID_API_KEY (or PLANTID_API_KEY) not set. "
+                "Required for disease detection. Get a key at https://admin.kindwise.com"
+            )
+
+    def detect_disease(
+        self,
+        image_data: bytes,
+        organ: str = "leaf",
+        filename: str = "image.jpg"
+    ) -> Dict:
+        """
+        Run health assessment (disease detection) via plant.id API v3.
+        Uses identification endpoint with health='only' and disease_details for rich results.
+        """
+        images_b64 = [base64.b64encode(image_data).decode('ascii')]
+        payload = {
+            'images': images_b64,
+            'health': 'only',
+        }
+        params = {
+            'details': 'local_name,description,treatment,common_names',
+        }
+        headers = {
+            'Api-Key': self.api_key,
+            'Content-Type': 'application/json',
+        }
+        try:
+            response = requests.post(
+                self.BASE_URL,
+                params=params,
+                headers=headers,
+                json=payload,
+                timeout=60,
+            )
+            response.raise_for_status()
+            return response.json()
+        except requests.exceptions.HTTPError as e:
+            try:
+                err = response.json()
+                raise Exception(f"plant.id API error: {response.status_code} - {err}")
+            except Exception:
+                raise Exception(f"plant.id API error: {response.status_code} - {response.text[:200]}")
+        except requests.exceptions.RequestException as e:
+            raise Exception(f"plant.id API error: {str(e)}")
+
+    @staticmethod
+    def parse_disease_result(api_response: Dict) -> Dict:
+        """
+        Map plant.id health assessment response to our DiseaseDetectionResponse shape.
+        Expects result.disease.suggestions with name, probability, details (description, etc.).
+        """
+        results = []
+        result = api_response.get('result') or {}
+        disease = result.get('disease') or {}
+        suggestions = disease.get('suggestions') or []
+
+        for item in suggestions:
+            name = item.get('name') or 'Unknown'
+            prob = item.get('probability', 0)
+            details = item.get('details') or {}
+            description = details.get('description')
+
+            results.append({
+                'disease_name': name,
+                'score': round(prob * 100, 2),
+                'description': description,
+            })
+
+        results.sort(key=lambda x: x['score'], reverse=True)
+
+        return {
+            'results': results,
+            'best_match': results[0]['disease_name'] if results else None,
+        }
 
 
 class PlantNetService:

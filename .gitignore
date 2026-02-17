@@ -217,3 +217,5 @@ __marimo__/
 .streamlit/secrets.toml
 
 Images/
+plantnet_diseases.json
+species_list.json
