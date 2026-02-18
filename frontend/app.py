@@ -27,7 +27,9 @@ st.markdown("Upload a plant image to identify the species and detect potential d
 st.sidebar.header("Settings")
 identification_mode = st.sidebar.radio(
     "Select Mode",
-    ["Species Identification", "Disease Detection", "Both"]
+    # "Species Identification",
+    # , "Both"
+    ["Disease Detection"]
 )
 
 # Main content
@@ -184,28 +186,33 @@ with col1:
 
                                 st.success("✅ Disease Detection Complete!")
 
-                                # Display best match
-                                if data.get('best_match'):
-                                    st.subheader(f"Most Likely: {data['best_match']}")
-
-                                # Display results
-                                st.markdown("### Disease Analysis")
-
-                                if data.get('results'):
-                                    for idx, result in enumerate(data.get('results', [])[:5], 1):
-                                        with st.expander(
-                                            f"{idx}. {result['disease_name']} - {result['score']:.1f}% probability",
-                                            expanded=(idx == 1)
-                                        ):
-                                            st.markdown(f"**Disease:** {result['disease_name']}")
-
-                                            if result.get('description'):
-                                                st.markdown(f"**Description:** {result['description']}")
-
-                                            # Progress bar for probability
-                                            st.progress(result['score'] / 100)
+                                # When plant.id reports healthy, show clear message and no disease list
+                                if data.get('is_healthy') is True:
+                                    st.subheader("🌿 Plant is healthy")
+                                    st.info("No significant disease or disorder was detected. Your plant appears healthy.")
                                 else:
-                                    st.info("No diseases detected or disease detection unavailable")
+                                    # Display best match (disease or "Healthy" from API)
+                                    if data.get('best_match'):
+                                        st.subheader(f"Most Likely: {data['best_match']}")
+
+                                    # Display results
+                                    st.markdown("### Disease Analysis")
+
+                                    if data.get('results'):
+                                        for idx, result in enumerate(data.get('results', [])[:5], 1):
+                                            with st.expander(
+                                                f"{idx}. {result['disease_name']} - {result['score']:.1f}% probability",
+                                                expanded=(idx == 1)
+                                            ):
+                                                st.markdown(f"**Disease:** {result['disease_name']}")
+
+                                                if result.get('description'):
+                                                    st.markdown(f"**Description:** {result['description']}")
+
+                                                # Progress bar for probability
+                                                st.progress(result['score'] / 100)
+                                    else:
+                                        st.info("No diseases detected or disease detection unavailable")
 
                             else:
                                 error_data = response.json()

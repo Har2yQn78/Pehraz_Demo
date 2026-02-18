@@ -39,6 +39,7 @@ class DiseaseScore(Schema):
 class DiseaseDetectionResponse(Schema):
     results: List[DiseaseScore]
     best_match: Optional[str] = None
+    is_healthy: Optional[bool] = None  # True when plant.id reports healthy (plant.id only)
 
 
 class ErrorResponse(Schema):

@@ -68,10 +68,22 @@ class PlantIdDiseaseService:
     def parse_disease_result(api_response: Dict) -> Dict:
         """
         Map plant.id health assessment response to our DiseaseDetectionResponse shape.
-        Expects result.disease.suggestions with name, probability, details (description, etc.).
+        Uses result.is_healthy.binary for healthy plants; result.disease.suggestions for diseases.
+        When healthy, returns is_healthy=True and no disease list so UI can say "Plant is healthy".
         """
-        results = []
         result = api_response.get('result') or {}
+        is_healthy_obj = result.get('is_healthy') or {}
+        is_healthy = bool(is_healthy_obj.get('binary', False))
+
+        # If plant is healthy, don't return diseases — say it's healthy only
+        if is_healthy:
+            return {
+                'results': [],
+                'best_match': 'Healthy',
+                'is_healthy': True,
+            }
+
+        results = []
         disease = result.get('disease') or {}
         suggestions = disease.get('suggestions') or []
 
@@ -92,6 +104,7 @@ class PlantIdDiseaseService:
         return {
             'results': results,
             'best_match': results[0]['disease_name'] if results else None,
+            'is_healthy': False,
         }
 
 
@@ -264,5 +277,6 @@ class PlantNetService:
 
         return {
             'results': results,
-            'best_match': results[0]['disease_name'] if results else None
+            'best_match': results[0]['disease_name'] if results else None,
+            'is_healthy': None,  # PlantNet disease API does not provide health flag
         }
